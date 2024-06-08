@@ -24,17 +24,17 @@ function addMenuItem() {
 function openPopup() {
   const popup = document.createElement("div");
   popup.style.position = "fixed";
-  popup.style.top = "50%";
+  popup.style.bottom = "0"; // Anchored to the bottom
   popup.style.left = "50%";
-  popup.style.transform = "translate(-50%, -50%)";
+  popup.style.transform = "translate(-50%, 0)";
   popup.style.padding = "30px";
   popup.style.backgroundColor = "#fff";
   popup.style.border = "2px solid #000";
-  popup.style.borderRadius = "10px";
+  popup.style.borderRadius = "10px 10px 0 0"; // Rounded corners at the top
   popup.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.1)";
   popup.style.zIndex = "1000";
   popup.style.width = "500px";
-  popup.style.height = "400px";
+  popup.style.maxHeight = "70vh"; // Adjusted max height to fit within the viewport
   popup.style.overflowY = "auto";
   popup.style.display = "flex";
   popup.style.flexDirection = "column";
@@ -45,10 +45,38 @@ function openPopup() {
   content.style.flexDirection = "column";
   content.style.gap = "15px";
 
+  // Site selection dropdown
+  const siteSelectLabel = document.createElement("label");
+  siteSelectLabel.innerText = "Select Site:";
+  siteSelectLabel.style.fontSize = "16px";
+  siteSelectLabel.style.fontWeight = "bold";
+  const siteSelect = document.createElement("select");
+  siteSelect.id = "siteSelect";
+  siteSelect.style.fontSize = "16px";
+  siteSelect.style.padding = "8px";
+  siteSelect.style.height = "40px"; // Increased height
+  siteSelect.style.borderRadius = "5px";
+  siteSelect.style.border = "1px solid #ccc";
+
+  content.appendChild(siteSelectLabel);
+  content.appendChild(siteSelect);
+
+  // Fetch and populate sites
+  fetchSites().then(sites => {
+    sites.forEach(site => {
+      const option = document.createElement("option");
+      option.value = site.Id;
+      option.text = site.DisplayValue;
+      siteSelect.appendChild(option);
+    });
+  }).catch(error => {
+    console.error('Failed to load sites:', error);
+  });
+
   // Person selection dropdown
   const personSelectLabel = document.createElement("label");
   personSelectLabel.innerText = "Select Person:";
-  personSelectLabel.style.fontSize = "18px";
+  personSelectLabel.style.fontSize = "16px";
   personSelectLabel.style.fontWeight = "bold";
   const personSelect = document.createElement("select");
   personSelect.id = "personSelect";
@@ -72,7 +100,7 @@ function openPopup() {
   // Shifts dropdown
   const shiftSelectLabel = document.createElement("label");
   shiftSelectLabel.innerText = "Select Shift:";
-  shiftSelectLabel.style.fontSize = "18px";
+  shiftSelectLabel.style.fontSize = "16px";
   shiftSelectLabel.style.fontWeight = "bold";
   const shiftSelect = document.createElement("select");
   shiftSelect.id = "shiftSelect";
@@ -87,7 +115,7 @@ function openPopup() {
   // Switch to person dropdown
   const switchPersonSelectLabel = document.createElement("label");
   switchPersonSelectLabel.innerText = "Switch To:";
-  switchPersonSelectLabel.style.fontSize = "18px";
+  switchPersonSelectLabel.style.fontSize = "16px";
   switchPersonSelectLabel.style.fontWeight = "bold";
   const switchPersonSelect = document.createElement("select");
   switchPersonSelect.id = "switchPersonSelect";
@@ -166,7 +194,41 @@ function loadShifts() {
   }
 }
 
+function fetchSites() {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage({ action: "getCookies" }, (response) => {
+      if (response.error) {
+        reject("Failed to get cookies");
+        return;
+      }
+
+      const cookies = response.cookies;
+      const cookieString = cookies.map(cookie => `${cookie.name}=${cookie.value}`).join("; ");
+
+      const config = {
+        method: "get",
+        maxBodyLength: Infinity,
+        url: "https://pdi.heinzcorps.com/Workforce/Setup/Sites/GetSites?menuCode=WFE&functionalSecurityRight=WFEEditAll",
+        headers: {
+          "Content-Type": "application/json; charset=UTF-8",
+          "X-Requested-With": "XMLHttpRequest",
+          "Cookie": cookieString,
+        },
+      };
+
+      axios(config)
+        .then(response => {
+          resolve(response.data);
+        })
+        .catch(error => {
+          reject(error);
+        });
+    });
+  });
+}
+
 function submitForm() {
+  const selectedSite = document.getElementById("siteSelect").value;
   const selectedPerson = document.getElementById("personSelect").value;
   const selectedShift = document.getElementById("shiftSelect").value;
   const switchToPerson = document.getElementById("switchPersonSelect").value;
@@ -174,6 +236,7 @@ function submitForm() {
   const data = JSON.stringify({
     ScheduleKey: 2484,
     WorkTypeKey: 2,
+    Site: selectedSite,
     Shifts: [
       {
         WorkshiftKey: 145543,
@@ -199,9 +262,7 @@ function submitForm() {
     }
 
     const cookies = response.cookies;
-    const cookieString = cookies
-      .map((cookie) => `${cookie.name}=${cookie.value}`)
-      .join("; ");
+    const cookieString = cookies.map(cookie => `${cookie.name}=${cookie.value}`).join("; ");
 
     const config = {
       method: "post",
@@ -210,20 +271,20 @@ function submitForm() {
       headers: {
         "Content-Type": "application/json; charset=UTF-8",
         "X-Requested-With": "XMLHttpRequest",
+        "Cookie": cookieString,
       },
       withCredentials: true, // Ensures cookies are included in the request
       data: data,
     };
 
     axios(config)
-      .then((response) => {
+      .then(response => {
         console.log(JSON.stringify(response.data));
       })
-      .catch((error) => {
+      .catch(error => {
         console.log(error);
       });
   });
 }
-
 addMenuItem();
 document.addEventListener("DOMContentLoaded", addMenuItem);
