@@ -140,14 +140,11 @@ function openPopup() {
 }
 
 function loadShifts() {
-  // Logic to load shifts based on selected person
   const person = document.getElementById("personSelect").value;
   const shiftSelect = document.getElementById("shiftSelect");
 
-  // Clear existing options
   shiftSelect.innerHTML = "";
 
-  // Load new shifts (dummy data for now)
   if (person === "person1") {
     const shiftOption1 = document.createElement("option");
     shiftOption1.value = "shift1";
@@ -170,13 +167,11 @@ function loadShifts() {
 }
 
 function submitForm() {
-  // Get the necessary values from the form
   const selectedPerson = document.getElementById("personSelect").value;
   const selectedShift = document.getElementById("shiftSelect").value;
   const switchToPerson = document.getElementById("switchPersonSelect").value;
 
-  // Use dummy data for the request body
-  let data = JSON.stringify({
+  const data = JSON.stringify({
     ScheduleKey: 2484,
     WorkTypeKey: 2,
     Shifts: [
@@ -197,33 +192,26 @@ function submitForm() {
     RequireEmployeesCount: 1,
   });
 
-  // Get cookies and headers from the current session
-  chrome.cookies.getAll({ domain: "pdi.heinzcorps.com" }, function (cookies) {
-    let cookieString = cookies
+  chrome.runtime.sendMessage({ action: "getCookies" }, (response) => {
+    if (response.error) {
+      console.error("Failed to get cookies:", response.error);
+      return;
+    }
+
+    const cookies = response.cookies;
+    const cookieString = cookies
       .map((cookie) => `${cookie.name}=${cookie.value}`)
       .join("; ");
 
-    let config = {
+    const config = {
       method: "post",
       maxBodyLength: Infinity,
       url: "https://pdi.heinzcorps.com/Workforce/LaborScheduling/Schedules/ProcessWorkshift",
       headers: {
-        "sec-ch-ua":
-          '"Google Chrome";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
-        DNT: "1",
-        "sec-ch-ua-mobile": "?0",
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
         "Content-Type": "application/json; charset=UTF-8",
-        Accept: "*/*",
         "X-Requested-With": "XMLHttpRequest",
-        "sec-ch-ua-platform": '"Windows"',
-        "Sec-Fetch-Site": "same-origin",
-        "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Dest": "empty",
-        host: "pdi.heinzcorps.com",
-        Cookie: cookieString,
       },
+      withCredentials: true, // Ensures cookies are included in the request
       data: data,
     };
 
@@ -237,4 +225,5 @@ function submitForm() {
   });
 }
 
+addMenuItem();
 document.addEventListener("DOMContentLoaded", addMenuItem);
