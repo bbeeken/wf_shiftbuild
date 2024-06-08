@@ -253,7 +253,7 @@ function loadSchedules() {
 
   const scheduleFilters = {
     "Site": {
-      "Key": siteKey,
+      "Key":  Number.parseInt(siteKey, 10),
       "Id": siteId,
       "IdFormatted": siteId,
       "Description": siteDescription
@@ -275,7 +275,7 @@ function loadSchedules() {
   fetchSchedules(scheduleFilters).then(schedules => {
     schedules.forEach(schedule => {
       const option = document.createElement("option");
-      console.log(schedule);
+ //     console.log(schedule);
       option.value = schedule.Key;
       option.text = `${schedule.LaborScheduleType.Description} (${schedule.StartDateTime} - ${schedule.EndDateTime})`;
       scheduleSelect.appendChild(option);
@@ -438,7 +438,7 @@ function fetchSchedules(scheduleFilters) {
         maxBodyLength: Infinity,
         url: 'https://pdi.heinzcorps.com/Workforce/LaborScheduling/Schedules/RetrieveSchedules',
         headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
+          'Content-Type': 'application/json',
           'Cookie': response.cookie
         },
         data: JSON.stringify(scheduleFilters)
@@ -446,7 +446,24 @@ function fetchSchedules(scheduleFilters) {
 
       axios(config)
         .then(response => {
-          resolve(response.data.CurrentSchedules.Schedules);
+          const currentSchedules = response.data.CurrentSchedules ? response.data.CurrentSchedules.Schedules : [];
+          const futureSchedules = response.data.FutureSchedules ? response.data.FutureSchedules.flatMap(fs => fs.Schedules) : [];
+          const combinedSchedules = [...currentSchedules, ...futureSchedules];
+
+          // Sort the combined schedules by LaborScheduleType.Description
+          combinedSchedules.sort((a, b) => {
+            const nameA = a.LaborScheduleType.Description.toUpperCase(); // Ignore case
+            const nameB = b.LaborScheduleType.Description.toUpperCase(); // Ignore case
+            if (nameA < nameB) {
+              return -1;
+            }
+            if (nameA > nameB) {
+              return 1;
+            }
+            return 0;
+          });
+
+          resolve(combinedSchedules);
         })
         .catch(error => {
           reject(error);
@@ -454,6 +471,7 @@ function fetchSchedules(scheduleFilters) {
     });
   });
 }
+
 
 
 function fetchEmployees(employeeFilters) {
