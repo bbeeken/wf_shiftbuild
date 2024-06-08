@@ -10,7 +10,7 @@ function addMenuItem() {
 
   const newLink = document.createElement("a");
   newLink.href = "#";
-  newLink.innerText = "New Popup Link";
+  newLink.innerText = "Shift Swapper";
   newLink.onclick = (event) => {
     event.preventDefault();
     openPopup();
@@ -86,18 +86,20 @@ function openPopup() {
   content.appendChild(siteSelect);
 
   // Fetch and populate sites
-  fetchSites().then(sites => {
-    sites.forEach(site => {
-      console.log(site);
-      const option = document.createElement("option");
-      option.value = site.Id;
-      option.text = site.DisplayValue;
-      option.setAttribute('data-key', site.Key); // 
-      siteSelect.appendChild(option);
+  fetchSites()
+    .then((sites) => {
+      sites.forEach((site) => {
+        console.log(site);
+        const option = document.createElement("option");
+        option.value = site.Id;
+        option.text = site.DisplayValue;
+        option.setAttribute("data-key", site.Key); //
+        siteSelect.appendChild(option);
+      });
+    })
+    .catch((error) => {
+      console.error("Failed to load sites:", error);
     });
-  }).catch(error => {
-    console.error('Failed to load sites:', error);
-  });
 
   // Schedule selection dropdown
   const scheduleSelectLabel = document.createElement("label");
@@ -240,8 +242,8 @@ function loadSchedules() {
   const siteId = siteSelect.value;
   const siteOption = siteSelect.selectedOptions[0];
   console.log(siteOption);
-  const siteDescription = siteOption.textContent.split('(')[0].trim();
-  const siteKey = siteOption.getAttribute('data-key'); // Retrieve the site key
+  const siteDescription = siteOption.textContent.split("(")[0].trim();
+  const siteKey = siteOption.getAttribute("data-key"); // Retrieve the site key
 
   if (!siteId || !siteKey) {
     console.error("Site not selected or site key not found");
@@ -252,40 +254,40 @@ function loadSchedules() {
   scheduleSelect.disabled = false;
 
   const scheduleFilters = {
-    "Site": {
-      "Key":  Number.parseInt(siteKey, 10),
-      "Id": siteId,
-      "IdFormatted": siteId,
-      "Description": siteDescription
+    Site: {
+      Key: Number.parseInt(siteKey, 10),
+      Id: siteId,
+      IdFormatted: siteId,
+      Description: siteDescription,
     },
-    "FromDate": "2024-05-25T00:00:00.00",
-    "ToDate": "1901-01-01T00:00:00.00",
-    "WeekEndingDate": "2024-06-08T00:00:00.00",
-    "ScheduleType": {
-      "Key": 0,
-      "ID": null,
-      "Description": null,
-      "Timestamp": null
+    FromDate: "2024-05-25T00:00:00.00",
+    ToDate: "1901-01-01T00:00:00.00",
+    WeekEndingDate: "2024-06-08T00:00:00.00",
+    ScheduleType: {
+      Key: 0,
+      ID: null,
+      Description: null,
+      Timestamp: null,
     },
-    "CanViewAdvSearch": true,
-    "CheckForLineOfAuthority": true,
-    "FilterSource": 0
+    CanViewAdvSearch: true,
+    CheckForLineOfAuthority: true,
+    FilterSource: 0,
   };
 
-  fetchSchedules(scheduleFilters).then(schedules => {
-    schedules.forEach(schedule => {
-      const option = document.createElement("option");
- //     console.log(schedule);
-      option.value = schedule.Key;
-      option.text = `${schedule.LaborScheduleType.Description} (${schedule.StartDateTime} - ${schedule.EndDateTime})`;
-      scheduleSelect.appendChild(option);
+  fetchSchedules(scheduleFilters)
+    .then((schedules) => {
+      schedules.forEach((schedule) => {
+        const option = document.createElement("option");
+        //     console.log(schedule);
+        option.value = schedule.Key;
+        option.text = `${schedule.LaborScheduleType.Description} (${schedule.StartDateTime} - ${schedule.EndDateTime})`;
+        scheduleSelect.appendChild(option);
+      });
+    })
+    .catch((error) => {
+      console.error("Failed to load schedules:", error);
     });
-  }).catch(error => {
-    console.error('Failed to load schedules:', error);
-  });
 }
-
-
 
 function loadEmployees() {
   const scheduleSelect = document.getElementById("scheduleSelect");
@@ -300,59 +302,61 @@ function loadEmployees() {
   personSelect.innerHTML = '<option value="">Select a person</option>';
 
   const employeeFilters = {
-    "employeeFilters": {
-      "Key": null,
-      "LastName": null,
-      "FirstName": "",
-      "Id": null,
-      "BusinessEntityKey": null,
-      "OrganizationLevelKey": "1",
-      "OrganizationId": scheduleId,
-      "WithTraitKey": null,
-      "WithTraitValue": null,
-      "PayTypeId": null,
-      "PayFrequencyId": null,
-      "StatusId": null,
-      "City": null,
-      "PositionTypeId": null,
-      "ExemptStatusId": null,
-      "PositionKey": null,
-      "StateProvinceKey": null,
-      "PostalCode": null,
-      "WorkTypeKey": null,
-      "DeductionKey": null,
-      "PayrollTaxKey": null,
-      "PaymentMethodId": null,
-      "TimeOffPlanKey": null,
-      "IsPopUp": false,
-      "OnlyActiveEmployees": true,
-      "NationalId": "",
-      "Email": null,
-      "CheckLoa": false,
-      "EffectiveDate": "2024-06-08T00:00:00.00",
-      "EffectiveThruDate": null,
-      "FunctionalSecurityCode": "WFEEditAll",
-      "AlwaysIncludeHomeSiteEmployees": false,
-      "ExcludeCurrentEmployees": false,
-      "LimitNumberOfRowsTo": 3000,
-      "EmployeeStatuses": null,
-      "UserId": null,
-      "OnlyEmployeesWithNegativeTimeOffBalance": false,
-      "AllowInActiveEmployees": true
-    }
+    employeeFilters: {
+      Key: null,
+      LastName: null,
+      FirstName: "",
+      Id: null,
+      BusinessEntityKey: null,
+      OrganizationLevelKey: "1",
+      OrganizationId: scheduleId,
+      WithTraitKey: null,
+      WithTraitValue: null,
+      PayTypeId: null,
+      PayFrequencyId: null,
+      StatusId: null,
+      City: null,
+      PositionTypeId: null,
+      ExemptStatusId: null,
+      PositionKey: null,
+      StateProvinceKey: null,
+      PostalCode: null,
+      WorkTypeKey: null,
+      DeductionKey: null,
+      PayrollTaxKey: null,
+      PaymentMethodId: null,
+      TimeOffPlanKey: null,
+      IsPopUp: false,
+      OnlyActiveEmployees: true,
+      NationalId: "",
+      Email: null,
+      CheckLoa: false,
+      EffectiveDate: "2024-06-08T00:00:00.00",
+      EffectiveThruDate: null,
+      FunctionalSecurityCode: "WFEEditAll",
+      AlwaysIncludeHomeSiteEmployees: false,
+      ExcludeCurrentEmployees: false,
+      LimitNumberOfRowsTo: 3000,
+      EmployeeStatuses: null,
+      UserId: null,
+      OnlyEmployeesWithNegativeTimeOffBalance: false,
+      AllowInActiveEmployees: true,
+    },
   };
 
-  fetchEmployees(employeeFilters).then(employees => {
-    employees.sort((a, b) => a.FullName.localeCompare(b.FullName));
-    employees.forEach(employee => {
-      const option = document.createElement("option");
-      option.value = employee.Id;
-      option.text = employee.FullName;
-      personSelect.appendChild(option);
+  fetchEmployees(employeeFilters)
+    .then((employees) => {
+      employees.sort((a, b) => a.FullName.localeCompare(b.FullName));
+      employees.forEach((employee) => {
+        const option = document.createElement("option");
+        option.value = employee.Id;
+        option.text = employee.FullName;
+        personSelect.appendChild(option);
+      });
+    })
+    .catch((error) => {
+      console.error("Failed to load employees:", error);
     });
-  }).catch(error => {
-    console.error('Failed to load employees:', error);
-  });
 }
 
 function loadShifts() {
@@ -365,10 +369,10 @@ function loadShifts() {
   const shifts = [
     { Id: 1, Description: "Morning Shift" },
     { Id: 2, Description: "Afternoon Shift" },
-    { Id: 3, Description: "Night Shift" }
+    { Id: 3, Description: "Night Shift" },
   ];
 
-  shifts.forEach(shift => {
+  shifts.forEach((shift) => {
     const option = document.createElement("option");
     option.value = shift.Id;
     option.text = shift.Description;
@@ -388,10 +392,10 @@ function submitForm() {
     schedule: scheduleSelect.value,
     person: personSelect.value,
     shift: shiftSelect.value,
-    switchPerson: switchPersonSelect.value
+    switchPerson: switchPersonSelect.value,
   };
 
-  console.log('Form data:', data);
+  console.log("Form data:", data);
 
   // Submit the form data to the server
   // Replace with actual submission logic
@@ -406,12 +410,12 @@ function fetchSites() {
       }
 
       const config = {
-        method: 'get',
+        method: "get",
         maxBodyLength: Infinity,
-        url: 'https://pdi.heinzcorps.com/Workforce/Setup/Sites/GetSites?menuCode=WFE&functionalSecurityRight=WFEEditAll',
+        url: "https://pdi.heinzcorps.com/Workforce/Setup/Sites/GetSites?menuCode=WFE&functionalSecurityRight=WFEEditAll",
         headers: {
-          'Cookie': response.cookie
-        }
+          Cookie: response.cookie,
+        },
       };
 
       axios(config)
@@ -434,20 +438,24 @@ function fetchSchedules(scheduleFilters) {
       }
 
       const config = {
-        method: 'post',
+        method: "post",
         maxBodyLength: Infinity,
-        url: 'https://pdi.heinzcorps.com/Workforce/LaborScheduling/Schedules/RetrieveSchedules',
+        url: "https://pdi.heinzcorps.com/Workforce/LaborScheduling/Schedules/RetrieveSchedules",
         headers: {
-          'Content-Type': 'application/json',
-          'Cookie': response.cookie
+          "Content-Type": "application/json",
+          Cookie: response.cookie,
         },
-        data: JSON.stringify(scheduleFilters)
+        data: JSON.stringify(scheduleFilters),
       };
 
       axios(config)
-        .then(response => {
-          const currentSchedules = response.data.CurrentSchedules ? response.data.CurrentSchedules.Schedules : [];
-          const futureSchedules = response.data.FutureSchedules ? response.data.FutureSchedules.flatMap(fs => fs.Schedules) : [];
+        .then((response) => {
+          const currentSchedules = response.data.CurrentSchedules
+            ? response.data.CurrentSchedules.Schedules
+            : [];
+          const futureSchedules = response.data.FutureSchedules
+            ? response.data.FutureSchedules.flatMap((fs) => fs.Schedules)
+            : [];
           const combinedSchedules = [...currentSchedules, ...futureSchedules];
 
           // Sort the combined schedules by LaborScheduleType.Description
@@ -465,14 +473,12 @@ function fetchSchedules(scheduleFilters) {
 
           resolve(combinedSchedules);
         })
-        .catch(error => {
+        .catch((error) => {
           reject(error);
         });
     });
   });
 }
-
-
 
 function fetchEmployees(employeeFilters) {
   return new Promise((resolve, reject) => {
@@ -483,14 +489,14 @@ function fetchEmployees(employeeFilters) {
       }
 
       const config = {
-        method: 'post',
+        method: "post",
         maxBodyLength: Infinity,
-        url: 'https://pdi.heinzcorps.com/Workforce/Employees/GetEmployeesByFilter?area=Setup',
+        url: "https://pdi.heinzcorps.com/Workforce/Employees/GetEmployeesByFilter?area=Setup",
         headers: {
-          'Content-Type': 'application/json',
-          'Cookie': response.cookie
+          "Content-Type": "application/json",
+          Cookie: response.cookie,
         },
-        data: JSON.stringify(employeeFilters)
+        data: JSON.stringify(employeeFilters),
       };
 
       axios(config)
