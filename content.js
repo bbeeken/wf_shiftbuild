@@ -22,6 +22,15 @@ function addMenuItem() {
 }
 
 function openPopup() {
+  const backdrop = document.createElement("div");
+  backdrop.style.position = "fixed";
+  backdrop.style.top = "0";
+  backdrop.style.left = "0";
+  backdrop.style.width = "100%";
+  backdrop.style.height = "100%";
+  backdrop.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+  backdrop.style.zIndex = "999";
+
   const popup = document.createElement("div");
   popup.style.position = "fixed";
   popup.style.top = "50%";
@@ -85,7 +94,6 @@ function openPopup() {
   fetchSites()
     .then((sites) => {
       sites.forEach((site) => {
-       // console.log(site);
         const option = document.createElement("option");
         option.value = site.Id;
         option.text = site.DisplayValue;
@@ -214,11 +222,20 @@ function openPopup() {
   closeButton.style.backgroundColor = "#f0f0f0";
   closeButton.style.cursor = "pointer";
   closeButton.onclick = () => {
-    document.body.removeChild(popup);
+    document.body.removeChild(backdrop);
   };
   content.appendChild(closeButton);
 
-  document.body.appendChild(popup);
+  popup.onclick = (event) => {
+    event.stopPropagation();
+  };
+
+  backdrop.appendChild(popup);
+  backdrop.onclick = () => {
+    document.body.removeChild(backdrop);
+  };
+
+  document.body.appendChild(backdrop);
   console.log("Popup opened");
 }
 
@@ -227,7 +244,6 @@ function loadSchedules() {
   const scheduleSelect = document.getElementById("scheduleSelect");
   const siteId = siteSelect.value;
   const siteOption = siteSelect.selectedOptions[0];
- // console.log(siteOption);
   const siteDescription = siteOption.textContent.split("(")[0].trim();
   const siteKey = siteOption.getAttribute("data-key");
 
@@ -276,25 +292,27 @@ function loadSchedules() {
 
 function fetchScheduleDetails(scheduleId) {
   const config = {
-    method: 'post',
-    url: 'https://pdi.heinzcorps.com/Workforce/LaborScheduling/Schedules/GetSchedule',
+    method: "post",
+    url: "https://pdi.heinzcorps.com/Workforce/LaborScheduling/Schedules/GetSchedule",
     headers: {
-      'Content-Type': 'application/json'
+      "Content-Type": "application/json",
     },
-    data: JSON.stringify({ key: scheduleId, publish: false })
+    data: JSON.stringify({ key: scheduleId, publish: false }),
   };
 
   axios(config)
-    .then(response => {
+    .then((response) => {
       const scheduleDetails = response.data;
-      console.log('Schedule details:', scheduleDetails);
+      console.log("Schedule details:", scheduleDetails);
       const workShifts = scheduleDetails?.Schedule?.Workshifts || [];
-      const availableEmployees = scheduleDetails?.WorkshiftEmployees || [];
+      const availableEmployees = scheduleDetails?.AvailableEmployees || [];
+      const workshiftEmployees =
+        scheduleDetails?.Schedule?.WorkshiftEmployees || [];
       populateWorkShiftsDropdown(workShifts);
-      populateStaffDropdown(availableEmployees);
+      populatePersonDropdowns(availableEmployees, workshiftEmployees);
     })
-    .catch(error => {
-      console.error('Error fetching schedule details:', error);
+    .catch((error) => {
+      console.error("Error fetching schedule details:", error);
     });
 }
 
@@ -303,27 +321,59 @@ function populateWorkShiftsDropdown(workShifts) {
 
   shiftSelect.innerHTML = '<option value="">Select a shift</option>';
 
-  workShifts.forEach(shift => {
-    const option = document.createElement('option');
+  workShifts.forEach((shift) => {
+    const option = document.createElement("option");
     option.value = shift.Key;
-    option.text = `${new Date(shift.StartDate).toLocaleString()} - ${new Date(shift.EndDate).toLocaleString()}`;
+    option.text = `${new Date(shift.StartDate).toLocaleString()} - ${new Date(
+      shift.EndDate
+    ).toLocaleString()}`;
     shiftSelect.appendChild(option);
   });
 }
 
-function populateStaffDropdown(staff) {
+function populatePersonDropdowns(availableEmployees, workshiftEmployees) {
+  const shiftSelect = document.getElementById("shiftSelect");
   const personSelect = document.getElementById("personSelect");
   const switchPersonSelect = document.getElementById("switchPersonSelect");
 
-  personSelect.innerHTML = '<option value="">Select a person</option>';
-  switchPersonSelect.innerHTML = '<option value="">Select a person to switch to</option>';
+  shiftSelect.onchange = () => {
+    const selectedShiftKey = shiftSelect.value;
+    personSelect.innerHTML = '<option value="">Select a person</option>';
+    switchPersonSelect.innerHTML =
+      '<option value="">Select a person to switch to</option>';
 
-  staff.forEach(member => {
-    const option = document.createElement('option');
-    option.value = member.Key;
-    option.text = `${member.FirstName} ${member.LastName}`;
-    switchPersonSelect.appendChild(option);
-  });
+    const assignedEmployees = workshiftEmployees
+      .filter((wse) => wse.WorkshiftKey == selectedShiftKey)
+      .map((wse) =>
+        availableEmployees.find((emp) => emp.Key == wse.EmployeeKey)
+      );
+
+    assignedEmployees.forEach((emp) => {
+      if (emp) {
+        const option = document.createElement("option");
+        option.value = emp.Key;
+        option.text = `${emp.FirstName} ${emp.LastName}`;
+        personSelect.appendChild(option);
+      }
+    });
+
+    const availableWorkTypeKeys = assignedEmployees.map(
+      (emp) => emp.WorkTypeKey
+    );
+    const swapCandidates = availableEmployees.filter((emp) =>
+      availableWorkTypeKeys.includes(emp.WorkTypeKey)
+    );
+
+    swapCandidates.forEach((emp) => {
+      const option = document.createElement("option");
+      option.value = emp.Key;
+      option.text = `${emp.FirstName} ${emp.LastName}`;
+      switchPersonSelect.appendChild(option);
+    });
+
+    personSelect.disabled = assignedEmployees.length === 0;
+    switchPersonSelect.disabled = personSelect.disabled;
+  };
 }
 
 function submitForm() {
